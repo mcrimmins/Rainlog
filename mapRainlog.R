@@ -80,8 +80,6 @@ mergedData <- merge(dataStack,gaugeStack,by="gaugeId")
 # use more elaborate outlier detection
 # account for missing days too...
 
-
-
 # try out automap on date range total
 library(dplyr)
 library(automap)
