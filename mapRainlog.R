@@ -6,8 +6,9 @@ library(RCurl)
 library(jsonlite)
 library(spacetime)
 
-dateRangeStart="2017-06-15"
-dateRangeEnd="2017-09-30"
+dateRangeStart="2018-06-15"
+dateRangeEnd="2018-09-07"
+allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # while statement to loop through pages
 limit<-1000
@@ -105,10 +106,17 @@ automapPlot(kriging_result$krige_output, "var1.pred", at=seq(6,11,0.5), col.regi
             sp.layout = list("sp.points", gaugeSumUTM))
 
 
+# https://www.rdocumentation.org/packages/sp/versions/1.3-1/topics/spplot
 # spaceTime data frames
 mergedData$readingDate<-as.Date(mergedData$readingDate)
 x = stConstruct(mergedData, c("position.lng", "position.lat"), "readingDate", SpatialObj = pts)
-stplot(x[,,"rainAmount"], number=30, cuts=12)
+
+# spplot
+library(RColorBrewer)
+my.palette <- brewer.pal(n = 9, name = "GnBu")
+at<-seq(0,1.8,0.2)
+stplot(x[,,"rainAmount"], number=length(allDates), colorkey=TRUE, col.regions = my.palette,
+       cex = 0.5, pch=16,cuts=at, main = "Rainlog Observations Monsoon 2018", key.space="left")
 
 library(ggmap)
 library(sp)
@@ -121,7 +129,13 @@ library(sp)
 
 # REPROJECT YOUR DATA TO EPSG 3857
 x@sp@proj4string <- CRS("+proj=longlat +datum=WGS84")
-xSp <- spTransform(x, CRS("+init=EPSG:3857"))
+#x@sp@proj4string <- CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84")
+#xSp <- spTransform(x, CRS("+init=EPSG:3857"))
+xSp <- spTransform(x, CRS("+proj=merc +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=6378137 +b=6378137 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"))
+
+
+
+#proj_geog <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84" 
 
 box <- x@sp@bbox
 
@@ -159,3 +173,7 @@ point.size <- 0.5
 stplot(x[,,"rainAmount"], number=2, cuts=12, sp.layout = sp.raster, 
        cex = point.size, main = "Rainlog Observations July 2017", key.space="left")
 
+stplot(x[,,"rainAmount"], sp.layout = sp.raster, 
+       cex = point.size, main = "Rainlog Observations July 2017", key.space="left")
+
+stplot(x[,,"rainAmount"], animate=1)
