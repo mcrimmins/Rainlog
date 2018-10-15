@@ -10,7 +10,7 @@ library(ggmap)
 library(scales)
 
 dateRangeStart="2018-06-15"
-dateRangeEnd="2018-09-18"
+dateRangeEnd="2018-09-30"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # specify center and radius for search area
@@ -116,7 +116,9 @@ mergedData$rainAmount[mergedData$rainAmount == 0] <- NA
 # ggmap basemap
 #TucsonMap <- qmap("tucson", zoom = 10,
 #                   color = "bw", maptype = "terrain-background", source = "stamen")
-TucsonMap <- qmap("tucson", zoom = 10,
+# get map and bounding box
+where<-geocode("tucson", source = "dsk")
+TucsonMap <- qmap(location = c(lon = where[1,1], lat = where[1,2]), zoom = 10,
                   color = "bw")
 
 
@@ -137,7 +139,7 @@ TucsonMap +
   scale_color_gradient2(limits=c(0, 1), mid=("blue"), high="red", low="green", oob=squish, midpoint = 0.5, name="Precip (in)",
                        labels = c("0.00", "0.25", "0.5", "0.75", "≥ 1.00"),
                        breaks = c(0, 0.25, 0.5, 0.75, 1.0))+
-  labs(title="Daily Rainlog.org Precipitation Observations - Monsoon Season 2017")
+  labs(title="Daily Rainlog.org Precipitation Observations - Monsoon Season 2018")
 
 # contour plots
 ggplot(mergedData, aes(x=position.lng ,y=position.lat, z=rainAmount))+

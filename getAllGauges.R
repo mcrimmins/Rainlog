@@ -8,9 +8,12 @@ library(ggmap)
 library(scales)
 library(reshape2)
 
+# API key
+source('APIkey.R')
+
 # Universal date range
-dateRangeStart="2018-09-18"
-dateRangeEnd="2018-09-21"
+dateRangeStart="2018-09-30"
+dateRangeEnd="2018-10-02"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # GET ACIS Stations ----
@@ -136,7 +139,7 @@ TucsonMap +
   labs(title="Daily ACIS & Rainlog Precipitation Observations - Monsoon Season 2018")
 
 # subset to date
-SubAllObs<-subset(allObs, readingDate == as.Date("2018-09-19") )
+SubAllObs<-subset(allObs, readingDate == as.Date("2018-10-02") )
 
 # define jet colormap
 jet.colors <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan", "#7FFF7F", "yellow", "#FF7F00", "red", "#7F0000"))
@@ -144,7 +147,7 @@ jet.colors <- colorRampPalette(c("#00007F", "blue", "#007FFF", "cyan", "#7FFF7F"
 # with basemap
 theme_set(theme_bw(16))
 TucsonMap +
-  geom_point(data=SubAllObs, aes(x=position.lng ,y=position.lat, color=rainAmount, shape=network), size=1.5)+ # removed from AES
+  geom_point(data=allObs, aes(x=position.lng ,y=position.lat, color=rainAmount, shape=network), size=1.5)+ # removed from AES
   #facet_wrap(~readingDate)+
   facet_wrap(~readingDate, ncol = 15, nrow = ceiling(length(allDates)/15))+ # 15 for whole season
   scale_shape_manual(values=c(15, 17))+ # outline=21, plus=3
@@ -152,8 +155,8 @@ TucsonMap +
   #                       labels = c("0.00", "0.25", "0.5", "0.75", "≥ 1.00"),
   #                       breaks = c(0, 0.25, 0.5, 0.75, 1.0), na.value="white")+
   scale_color_gradientn(colors =  jet.colors(7),
-    limits=c(0, 10),name="Precip (in)",
+    limits=c(0, 1),name="Precip (in)",
                         labels = c("0.00", "0.25", "0.5", "0.75", "≥ 1.00"),
                         breaks = c(0, 0.25, 0.5, 0.75, 1.0), na.value="grey48")+
-  labs(title="Daily ACIS & Rainlog Precipitation Observations - Monsoon Season 2018")
+  labs(title="Daily ACIS & Rainlog Precipitation Observations")
 

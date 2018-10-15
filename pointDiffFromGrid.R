@@ -9,9 +9,12 @@ library(scales)
 library(reshape2)
 library(raster)
 
+# API key
+source('APIkey.R')
+
 # Universal date range
 dateRangeStart="2018-06-14"
-dateRangeEnd="2018-09-18"
+dateRangeEnd="2018-09-30"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # GET ACIS Stations ----
@@ -151,8 +154,12 @@ for(i in 1:nrow(allObs)){
             cellFromXY(gridStack[[1]], c(allObs$position.lng[i],allObs$position.lat[i])))
 }
 # get diffs
+allObs$gridPrecip[allObs$gridPrecip < 0] <- NA # missing data to NA
 allObs$gridDiff<-allObs$rainAmount-allObs$gridPrecip
 
+
+
+# PLOTTING ----- 
 # plot some results
 library(ggplot2)
 ggplot(allObs, aes(x=gridDiff, color=network)) + 
@@ -180,4 +187,45 @@ TucsonMap +
   scale_color_gradient2(limits=c(-0.5, 0.5), mid=("white"), high="orange", low="purple", oob=squish, midpoint = 0, name="Precip Diff (in)", na.value="white")+
   labs(title="Diff in Precip Obs (point-MPE grid) - Monsoon Season 2018")
 
+# PLOT ERRORS ----
 #RMSE time series plot
+# Function that returns Root Mean Squared Error
+rmse <- function(error){sqrt(mean(error^2,na.rm = TRUE))}
+# Function that returns Mean Absolute Error
+mae <- function(error){mean(abs(error), na.rm = TRUE)}
+
+library('dplyr')
+
+allObs$rainAmount[allObs$rainAmount > 6] <- NA # outliers to NA
+# summarize values
+errorAllObs<-allObs %>% group_by(readingDate) %>% summarize(countObs = n(),
+                                                            rainObsN = sum(rainAmount > 0, na.rm = TRUE),
+                                                            pctRainObsN = (rainObsN/countObs)*100,
+                                                            maxAmount=max(rainAmount, na.rm = TRUE),
+                                                            medianAmount=median(rainAmount, na.rm = TRUE),
+                                                            rmseGridDiff=rmse(gridDiff),
+                                                            maeGridDiff=mae(gridDiff)
+                                                            )
+errorNetworkObs<-allObs %>% group_by(readingDate, network) %>% summarize(countObs = n(),
+                                                                         rainObsN = sum(rainAmount > 0, na.rm = TRUE),
+                                                                         pctRainObsN = (rainObsN/countObs)*100,
+                                                                         maxAmount=max(rainAmount, na.rm = TRUE),
+                                                                         medianAmount=median(rainAmount, na.rm = TRUE),
+                                                                         rmseGridDiff=rmse(gridDiff),
+                                                                         maeGridDiff=mae(gridDiff)
+                                                            )
+
+# ggplot values
+errorAllObsMelt<-melt(errorAllObs, id.vars = 'readingDate')
+ggplot(errorAllObsMelt, aes(x=readingDate, y=value))+
+  geom_line()+
+  facet_wrap(~variable, nrow = 7, scales="free_y")
+
+errorNetworkObsMelt<-melt(errorNetworkObs, id.vars = c('readingDate','network'))
+errorNetworkObsMelt$network<-as.factor(errorNetworkObsMelt$network)
+ggplot(errorNetworkObsMelt, aes(x=readingDate, y=value, color=network))+
+  geom_line()+
+  facet_wrap(~variable, nrow = 7, scales="free_y")+
+  labs(title='Tucson Monsoon Season 2018 - Network and Grid Comparisons (NOAA AHPS/MPE grid)')+
+  theme_bw()
+
