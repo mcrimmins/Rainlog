@@ -42,3 +42,34 @@ while (done==0) {
   rm(out)
   print(i)
 }
+
+
+# get data from single gauge or several gauges
+
+limit<-1000
+i<-0
+done<-0
+
+while (done==0) {
+  jsonQuery=paste0('{"dateRangeStart":"2000-01-01","dateRangeEnd":"2018-05-01","gaugeIds":[1185],"pagination":{"offset":',i,',"limit":',limit,'}}')
+  out<-postForm("https://rainlog.org/api/1.0/Reading/getFiltered", 
+                .opts = list(postfields = jsonQuery, 
+                             httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')))
+  out<-fromJSON(out)
+  if(exists("out")==TRUE){
+    if (i==0){
+      gaugeStack<-flatten(out)
+    }else{
+      gaugeStack<-rbind(gaugeStack, flatten(out))
+    }
+  }else{
+    break
+    done<-1
+  }
+  
+  i <-i+limit
+  rm(out)
+  print(i)
+}
+
+write.csv2(gaugeStack, file="Rainlog1185.csv")

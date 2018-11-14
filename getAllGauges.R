@@ -12,15 +12,15 @@ library(reshape2)
 source('APIkey.R')
 
 # Universal date range
-dateRangeStart="2018-09-30"
-dateRangeEnd="2018-10-02"
+dateRangeStart="2018-10-02"
+dateRangeEnd="2018-10-03"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # GET ACIS Stations ----
 # get map and bounding box
 where<-geocode("tucson", source = "dsk")
-TucsonMap <- qmap(location = c(lon = where[1,1], lat = where[1,2]), zoom = 10,
-                  color = "bw")
+TucsonMap <- qmap(location = c(lon = where[1,1], lat = where[1,2]), zoom = 9,
+                  color = "bw") # zoom-10 for Tucson
 # RCC ACIS bbox - Bounding box specified in decimal degrees (W,S,E,N) (e.g. [-90, 40, -88, 41])
 ACISbbox<-paste0(min(TucsonMap$data$lon),',',min(TucsonMap$data$lat),',',max(TucsonMap$data$lon),',',max(TucsonMap$data$lat))
 
