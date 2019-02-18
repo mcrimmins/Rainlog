@@ -13,8 +13,8 @@ library(scales)
 source('APIkey.R')
 
 # set date ranges
-dateRangeStart="2018-05-01"
-dateRangeEnd="2018-10-31"
+dateRangeStart="2018-12-01"
+dateRangeEnd="2018-12-31"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # specify center and radius for search area
@@ -24,8 +24,9 @@ limit<-1000
 i<-0
 done<-0
 
+# using geographic center of US 39.828165, -98.579480
 while (done==0) {
-  jsonQuery=paste0('{"quality":["Good"],"pagination":{"offset":',i,',"limit":',limit,'},"dateRangeStart":"',dateRangeStart,'","dateRangeEnd":"',dateRangeEnd,'","region":{"type":"Circle","center":{"lat":32.221551,"lng":-110.909479},"radius":20.0}}')
+  jsonQuery=paste0('{"quality":["Good"],"pagination":{"offset":',i,',"limit":',limit,'},"dateRangeStart":"',dateRangeStart,'","dateRangeEnd":"',dateRangeEnd,'","region":{"type":"Circle","center":{"lat":39.828165,"lng":-98.579480},"radius":2000.0}}')
   out<-postForm("https://rainlog.org/api/1.0/Reading/getFiltered", 
                 .opts = list(postfields = jsonQuery, 
                              httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')))
