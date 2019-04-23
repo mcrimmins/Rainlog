@@ -13,8 +13,8 @@ library(raster)
 source('APIkey.R')
 
 # Universal date range
-dateRangeStart="2018-06-14"
-dateRangeEnd="2018-09-30"
+dateRangeStart="2018-07-03"
+dateRangeEnd="2018-07-14"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # GET ACIS Stations ----
@@ -127,7 +127,10 @@ allObs<-rbind(rainlogObs,meltData)
 #allObs$rainAmount[allObs$rainAmount == 0] <- NA
 
 # GET GRID ----
+
 #jsonQuery=paste0('{"bbox":"',ACISbbox,'","sdate":"',dateRangeStart,'","edate":"',dateRangeEnd,'","grid":"21","elems":"pcpn","meta":"ll,elev","output":"json"}') # or uid
+# grid-2 is MPE
+# grid 21 is PRISM
 jsonQuery=paste0('{"bbox":"',ACISbbox,'","sdate":"',dateRangeStart,'","edate":"',dateRangeEnd,'","grid":"2","elems":"pcpn","meta":"ll","output":"json"}') # or uid
 
 out<-postForm("http://data.rcc-acis.org/GridData", 
@@ -182,7 +185,8 @@ theme_set(theme_bw(16))
 TucsonMap +
   geom_point(data=subObs, aes(x=position.lng ,y=position.lat, color=gridDiff, shape=network), size=1)+ # removed from AES
   #facet_wrap(~readingDate)+
-  facet_wrap(~readingDate, ncol = 15, nrow = ceiling(length(allDates)/15))+ # 15 for whole season
+  #facet_wrap(~readingDate, ncol = 15, nrow = ceiling(length(allDates)/15))+ # 15 for whole season
+  facet_wrap(~readingDate, ncol = 4, nrow = 3)+ # 15 for whole season
   scale_shape_manual(values=c(15, 17))+ # outline=21, plus=3
   scale_color_gradient2(limits=c(-0.5, 0.5), mid=("white"), high="orange", low="purple", oob=squish, midpoint = 0, name="Precip Diff (in)", na.value="white")+
   labs(title="Diff in Precip Obs (point-MPE grid) - Monsoon Season 2018")

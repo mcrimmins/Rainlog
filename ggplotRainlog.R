@@ -13,8 +13,8 @@ library(scales)
 source('APIkey.R')
 
 # set date ranges
-dateRangeStart="2018-05-01"
-dateRangeEnd="2018-10-31"
+dateRangeStart="2019-01-01"
+dateRangeEnd="2019-03-01"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # specify center and radius for search area
@@ -80,9 +80,9 @@ while (done==0) {
 }
 
 # reverse geocode
-library(revgeo)
-test<-gaugeStack[1:20,]
-location<-revgeo(test$position.lng, test$position.lat, output = 'frame')
+# library(revgeo)
+# test<-gaugeStack[1:20,]
+# location<-revgeo(test$position.lng, test$position.lat, output = 'frame')
 
 # join data frames
 mergedData <- merge(dataStack,gaugeStack,by="gaugeId")
