@@ -13,8 +13,8 @@ library(scales)
 source('APIkey.R')
 
 # set date ranges
-dateRangeStart="2012-07-14"
-dateRangeEnd="2012-07-16"
+dateRangeStart="2018-09-01"
+dateRangeEnd="2019-08-31"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # specify center and radius for search area
@@ -91,7 +91,7 @@ mergedData <- merge(dataStack,gaugeStack,by="gaugeId")
 mergedData$readingDate<-as.Date(mergedData$readingDate)-1
 
 # write out file
-#write.csv(mergedData, file="Aug8_11_2018_Tucson_Rainlog.csv")
+#write.csv(mergedData, file="090118_083119_Tucson_Rainlog.csv")
 
 # look for outliers
 #stats<-boxplot(mergedData$rainAmount)
