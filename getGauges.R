@@ -22,16 +22,16 @@ i<-0
 done<-0
 
 while (done==0) {
-  jsonQuery=paste0('{"dateRangeStart":"2000-01-01","dateRangeEnd":"2018-05-01","region":{"type":"Circle","center":{"lat":34.454345,"lng":-111.443652},"radius":200.0},"pagination":{"offset":',i,',"limit":',limit,'}}')
+  jsonQuery=paste0('{"dateRangeStart":"2023-01-01","dateRangeEnd":"2024-01-01","region":{"type":"Circle","center":{"lat":34.454345,"lng":-111.443652},"radius":200.0},"pagination":{"offset":',i,',"limit":',limit,'}}')
   out<-postForm("https://rainlog.org/api/1.0/GaugeRevision/getFiltered", 
                 .opts = list(postfields = jsonQuery, 
                              httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')))
   out<-fromJSON(out)
   if(exists("out")==TRUE){
     if (i==0){
-      gaugeStack<-flatten(out)
+      gaugeMeta<-flatten(out)
     }else{
-      gaugeStack<-rbind(gaugeStack, flatten(out))
+      gaugeMeta<-rbind(gaugeMeta, flatten(out))
     }
   }else{
     break
@@ -51,7 +51,7 @@ i<-0
 done<-0
 
 while (done==0) {
-  jsonQuery=paste0('{"dateRangeStart":"2000-01-01","dateRangeEnd":"2018-05-01","gaugeIds":[1185],"pagination":{"offset":',i,',"limit":',limit,'}}')
+  jsonQuery=paste0('{"dateRangeStart":"2023-01-01","dateRangeEnd":"2024-01-01","pagination":{"offset":',i,',"limit":',limit,'}}')
   out<-postForm("https://rainlog.org/api/1.0/Reading/getFiltered", 
                 .opts = list(postfields = jsonQuery, 
                              httpheader = c('Content-Type' = 'application/json', Accept = 'application/json')))
@@ -73,3 +73,16 @@ while (done==0) {
 }
 
 write.csv2(gaugeStack, file="Rainlog1185.csv")
+
+
+#####
+
+# join two tables
+mergedGauges<-merge(gaugeStack, gaugeMeta, by="gaugeId")
+
+gauges<-mergedGauges[!duplicated(mergedGauges[c('gaugeId')]), ]
+
+gauges<-gauges[,c(12:20)]
+
+write.csv(gauges, file="RainlogGauges2024.csv")
+

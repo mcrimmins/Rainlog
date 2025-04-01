@@ -94,6 +94,29 @@ print(p)
 dev.off()
 # ----
 
+# FIGURE 5 with average daily observation rate
+monthlyDayRate<-mergedData %>%
+      group_by(month) %>%
+      summarize(countObs =n(),
+                countNA = sum(is.na(rainAmount)))
+monthlyDayRate$daysInMonth<-c(31,28,31,30,31,30,31,31,30,31,30,31)
+monthlyDayRate$avgRate<-round(monthlyDayRate$countObs/(monthlyDayRate$daysInMonth*12),0)
+p<-ggplot(monthlyDayRate, aes(as.factor(month),avgRate))+
+  geom_bar(fill = "skyblue", alpha = 1, stat = "identity")+
+  #geom_vline(xintercept = 7)+
+  theme_bw()+
+  xlab("month")+
+  ylab("Average daily number of observations")
+  #scale_y_continuous(limits=c(0,100000),oob = rescale_none)
+#ggtitle("Total Tucson Area Rainlog observations by month (2007-2018)")
+# png("/home/crimmins/RProjects/RainlogAPI/manuscript/ObsByMonth.png",
+#     width = 7, height = 3, units = "in", res = 300L)
+tiff("/home/crimmins/RProjects/RainlogAPI/manuscript/figs/Fig5_ObsByMonth.tif",
+     width = 7, height = 3, units = "in", res = 300L)
+print(p)
+dev.off()
+
+
 # generate month summaries
 summaryMonths<-mergedData %>%
   group_by(yearMonth) %>%
@@ -120,6 +143,8 @@ ggplot(data=summaryMonths, aes(x=yearMonth, y=countObs)) +
 # generate daily summaries
 tempMerge<-mergedData
 #tempMerge$rainAmount[tempMerge$rainAmount == 0] <- NA
+temp<-tempMerge[tempMerge$readingDate=="2014-09-08",]
+temp<-temp[temp$rainAmount>=1.8,]
 
 summaryDays <-tempMerge %>%
   group_by(readingDate) %>%
@@ -166,6 +191,8 @@ summaryDays$TIAminusRainlog<-summaryDays$precip-summaryDays$medianRain
 summaryDays$month<-as.numeric(format(summaryDays$readingDate, "%m"))
 summaryDays$season<-as.factor(ifelse(summaryDays$month>4 & summaryDays$month<11, "May-Oct", "Nov-Apr"))
 
+ggplot(summaryDays, aes(as.factor(month),iqrRainwo0))+
+  geom_boxplot()
 
 # check if there are days with no observations
 # allDates<-as.data.frame(seq(as.Date("2014-01-01"), as.Date("2018-12-31"),"day"))
@@ -543,7 +570,7 @@ p1<-ggplot(data=summaryDays, aes(x=readingDate, y=medianRain*25.4, color=season,
   scale_color_manual(values=c("#ff7f00","#1f78b4"))+
   geom_point(data=topPoints, aes(x=readingDate, y=medianRain*25.4), colour="blue")+
   xlab("Date")+
-  ylab("MDR (mm)")
+  ylab("DMR (mm)")
 
   #geom_point(data=topPoints, aes(x=readingDate, y=medianRain), colour="blue")
   #aggregate(summaryDays$medianRainwo0, list(summaryDays$season), median, na.rm=TRUE) # get stats by season
@@ -602,14 +629,14 @@ dateSort<-topPoints$readingDate
 
 # get subset of summaryDays for facet stats
 summaryDaysSubset <- summaryDays[summaryDays$readingDate %in% dateSort, ]
-summaryDaysSubset$readingDate<-factor(as.character(summaryDaysSubset$readingDate),levels=as.character(dateSort))
+summaryDaysSubset$readingDate<-factor(as.character(summaryDaysSubset$readingDate),levels=as.character(rev(dateSort)))
 
 # manual date sort
 #dateSort<-c(as.Date("2011-09-15"), as.Date("2014-09-08"))
 
 # create subset
 mergedDataSubset <- mergedData[mergedData$readingDate %in% dateSort, ]
-mergedDataSubset$readingDate<-factor(as.character(mergedDataSubset$readingDate),levels=as.character(dateSort))
+mergedDataSubset$readingDate<-factor(as.character(mergedDataSubset$readingDate),levels=as.character(rev(dateSort)))
 
 # clean up the dataset -- PROBLEM HERE, eliminating good obs
 #mergedDataSubset<-mergedDataSubset[mergedDataSubset$quality %in% c('Good','Trace'),]
@@ -625,6 +652,8 @@ mergedDataSubset$rainAmount[mergedDataSubset$rainAmount == 0] <- NA
 # get TIA data for subset days
 subTIAdata <- dataTIA[dataTIA$date %in% dateSort, ]
 colnames(subTIAdata)[1]<-"readingDate"
+subTIAdata$readingDate<-factor(as.character(subTIAdata$readingDate),levels=as.character(rev(dateSort)))
+
 
 # Top Points table...
 topPointsTable<-topPoints[,c(1,2,3,5,7,9,10,17,29)]
@@ -769,8 +798,14 @@ TucsonMap + geom_point(aes(x = lon, y = lat, colour = count), shape = 16, size =
 temp<-summaryGauges[summaryGauges$percMiss<=10,]
 mergedDataHQ<- mergedData[mergedData$gaugeRevisionId %in% temp$gaugeRevisionId,]
 
+# remove 2007 half season for full period stats
+mergedDataHQ2<-mergedDataHQ
+mergedDataHQ2$rainAmount[which(mergedDataHQ2$season=="Nov-Apr" & mergedDataHQ2$year=="2007")] <- NA
+#mergedDataHQ2$rainAmount[which(mergedDataHQ2$readingDate<as.Date("2007-05-01"))] <- NA
+#mergedDataHQ2<-subset(mergedDataHQ2, readingDate>=as.Date("2007-05-01"))
+
 # cool/warm season stats
-seasonalMean<-mergedDataHQ %>%
+seasonalMean<-mergedDataHQ2 %>%
   group_by(gaugeRevisionId,season) %>%
   summarize(countObs = n(),
             meanP = sum(rainAmount, na.rm = TRUE)/12,
@@ -779,7 +814,11 @@ seasonalMean<-mergedDataHQ %>%
             elevs = max(elevation, na.rm = TRUE)
             )
 # TIA summary
-TIAmean<-summaryDays %>%
+# remove 2007 half season for full period stats
+summaryDays2<-summaryDays
+summaryDays2$precip[which(summaryDays2$season=="Nov-Apr" & summaryDays2$year=="2007")] <- NA
+# TIA data
+TIAmean<-summaryDays2 %>%
   group_by(season) %>%
   summarize(countObs = n(),
             meanP = sum(precip, na.rm = TRUE)/12)
@@ -796,14 +835,16 @@ TIAmean$season <- factor(TIAmean$season,
 # boxplot - seasonal means
 p<-ggplot(data=seasonalMean, aes(y=meanP*25.4, x=season, group=(season), color=(season)))+
   geom_boxplot(varwidth = TRUE, fill="grey85")+
-  ylim(0,10*25.4)+
+  ylim(0,400)+
   scale_color_manual(values=c("#1f78b4","#ff7f00"))+
   theme(legend.position="none")+
   #ggtitle("  ")+
   ylab("mm")+
   geom_hline(yintercept = 4.34*25.4, color="#1f78b4")+
   geom_hline(yintercept = 7.25*25.4, color="#ff7f00")# outlier.shape = NA
+
 p1<- p+geom_point(data=TIAmean, aes(y=meanP*25.4, x=season), shape=8, size=3) # color='black'
+
               
 # cool/warm season stats - BY YEAR
 seasonalMeanYear<-mergedDataHQ %>%
@@ -837,6 +878,10 @@ TIAmeanYearly$season <- factor(TIAmeanYearly$season,
 seasonalMeanYear$seasonGroup<-factor(seasonalMeanYear$seasonGroup,levels = rev(levels(seasonalMeanYear$seasonGroup)),ordered = TRUE)
 TIAmeanYearly$seasonGroup<-factor(TIAmeanYearly$seasonGroup,levels = rev(levels(TIAmeanYearly$seasonGroup)),ordered = TRUE)
 
+# censor out Nov-Apr 2007 - incomplete season
+seasonalMeanYear$meanP[which(seasonalMeanYear$season=="Nov-Apr" & seasonalMeanYear$year=="2007")] <- -99
+TIAmeanYearly$meanP[which(TIAmeanYearly$season=="Nov-Apr" & TIAmeanYearly$year=="2007")] <- -99
+
 
 # add long-term mean for TIA from 1981-2010 http://drought.rcc-acis.org/
 # cool season 4.34
@@ -844,15 +889,17 @@ TIAmeanYearly$seasonGroup<-factor(TIAmeanYearly$seasonGroup,levels = rev(levels(
 
 # FIGURE 6 
 p2<-ggplot(data=seasonalMeanYear, aes(y=meanP*25.4,x=year,group=seasonGroup, color=season))+
-  geom_boxplot(varwidth = FALSE,fill="grey85")+
-  ylim(0,10*25.4)+
+  geom_boxplot(varwidth = FALSE,fill="grey85")+ # position_dodge single
+  #ylim(0,10*25.4)+
   scale_x_continuous(breaks=seq(2008,2018,2))+
   scale_color_manual(values=c("#1f78b4","#ff7f00"))+
   ylab("mm")+
   #ggtitle("Near-complete Rainlog Stations (2007-18)")+# outlier.shape = NA
 geom_point(data=TIAmeanYearly, aes(y=meanP*25.4,x=year,group=seasonGroup, color=season), shape=8, size=3,position=position_dodge(width=0.75))+
 geom_hline(yintercept = 4.34*25.4, color="#1f78b4")+
-  geom_hline(yintercept = 7.25*25.4, color="#ff7f00")
+  geom_hline(yintercept = 7.25*25.4, color="#ff7f00")+
+  coord_cartesian(ylim = c(0, 400))
+  
 #p+geom_bar(data=TIAmeanYearly, aes(y=meanP,x=year,fill=season, group=seasonGroup),stat="identity")
 p<-plot_grid(p1,p2, labels = c("a","b"),rel_widths = c(1, 4))
 

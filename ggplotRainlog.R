@@ -13,8 +13,8 @@ library(scales)
 source('APIkey.R')
 
 # set date ranges
-dateRangeStart="2019-01-01"
-dateRangeEnd="2019-03-01"
+dateRangeStart="2020-07-24"
+dateRangeEnd="2020-07-24"
 allDates<-seq(as.Date(dateRangeStart), as.Date(dateRangeEnd),1)
 
 # specify center and radius for search area
